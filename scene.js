@@ -331,7 +331,7 @@ function createMirror(){
         color: 0x777777
     } );
     mirrorObject.translateY(0.5);
-    mirrorObject.translateZ(0.019);
+    mirrorObject.translateZ(0.02);
     mirror.add( mirrorObject );
 
     const borderGeometry = new THREE.CircleGeometry(0.3, 100);
