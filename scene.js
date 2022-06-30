@@ -312,6 +312,40 @@ function TrafficLight(name){
     return trafficLight;
 }
 
+function createMirror(){
+    const mirror = new THREE.Group();
+
+    const postGeometry = new THREE.BoxBufferGeometry(0.07, 0.6, 0.01);
+    const postMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
+    const post = new THREE.Mesh(postGeometry, postMaterial);
+    post.translateY(0.15);
+    post.castShadow = true;
+    post.receiveShadow = true;
+    mirror.add(post);
+
+    const mirrorGeometry = new THREE.CircleGeometry(0.25 , 32 );
+    const mirrorObject = new THREE.Reflector( mirrorGeometry, {
+        clipBias: 0.003,
+        textureWidth: window.innerWidth * window.devicePixelRatio,
+        textureHeight: window.innerHeight * window.devicePixelRatio,
+        color: 0x777777
+    } );
+    mirrorObject.translateY(0.5);
+    mirrorObject.translateZ(0.019);
+    mirror.add( mirrorObject );
+
+    const borderGeometry = new THREE.CircleGeometry(0.3, 100);
+    const borderMaterial1 = new THREE.MeshBasicMaterial({ color: 0xFF4500 , side: THREE.DoubleSide });
+    const border = new THREE.Mesh(borderGeometry, borderMaterial1);
+    border.translateY(0.5);
+    border.translateZ(0.009);
+    border.receiveShadow = true;
+    border.castShadow = true;
+    mirror.add(border);    
+
+    return mirror;
+}
+
 function createTree(cylinderRadius = 1/6, cylinderHeight = 4/6, baseConeRadius = 2/6, coneHeight = 1) {
     // Creating a model by grouping basic geometries
     // Cylinder centered at the origin
@@ -503,6 +537,17 @@ function load3DObjects(sceneGraph) {
     // Set shadow property
     truck.castShadow = true;
     truck.receiveShadow = true;
+
+    // ************************** //
+    // Create a Mirror
+    // ************************** //
+    const mirror = createMirror();
+    sceneGraph.add(mirror);
+    mirror.translateZ(1);
+    mirror.translateX(-1.50);
+    // Set shadow property
+    mirror.castShadow = true;
+    mirror.receiveShadow = true;
 
     // ************************** //
     // Create a trafficLight

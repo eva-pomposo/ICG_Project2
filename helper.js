@@ -26,12 +26,6 @@ const helper = {
         camera.lookAt(0, 0, 0);
 
         // ************************** //
-        // NEW --- Control for the camera
-        // ************************** //
-        sceneElements.control = new THREE.OrbitControls(camera);
-        sceneElements.control.screenSpacePanning = true;
-
-        // ************************** //
         // Illumination
         // ************************** //
 
@@ -75,6 +69,13 @@ const helper = {
         // **************************************** //
         const htmlElement = document.querySelector("#Tag3DScene");
         htmlElement.appendChild(renderer.domElement);
+
+
+        // ************************** //
+        // NEW --- Control for the camera
+        // ************************** //
+        sceneElements.control = new THREE.OrbitControls(camera, renderer.domElement);
+        sceneElements.control.screenSpacePanning = true;
     },
 
     render: function render(sceneElements) {
