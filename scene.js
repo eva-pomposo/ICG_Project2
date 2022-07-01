@@ -13,6 +13,10 @@ const sceneElements = {
     renderer: null,
 };
 
+//Font geometry and object
+const rainGeo = new THREE.Geometry();
+let rain;
+
 // Functions are called
 //  1. Initialize the empty scene
 //  2. Add elements within the scene
@@ -324,14 +328,17 @@ function createMirror(){
     mirror.add(post);
 
     const mirrorGeometry = new THREE.CircleGeometry(0.25 , 32 );
+    //const mirrorGeometry = new THREE.SphereGeometry(0.25 , 32, 16, 0, Math.PI *2, 0, 1 );
     const mirrorObject = new THREE.Reflector( mirrorGeometry, {
         clipBias: 0.003,
         textureWidth: window.innerWidth * window.devicePixelRatio,
         textureHeight: window.innerHeight * window.devicePixelRatio,
         color: 0x777777
+        //side: THREE.DoubleSide
     } );
     mirrorObject.translateY(0.5);
-    mirrorObject.translateZ(0.02);
+    mirrorObject.translateZ(0.03);
+    //mirrorObject.rotateX( Math.PI / 2 );
     mirror.add( mirrorObject );
 
     const borderGeometry = new THREE.CircleGeometry(0.3, 100);
@@ -344,6 +351,54 @@ function createMirror(){
     mirror.add(border);    
 
     return mirror;
+}
+
+function createFountainSpout(sceneGraph){
+    for (let i = 0; i < 400; i++) {
+        const originX = Math.random() * 0.5 - 0.25
+        const originY = -.20
+        const originZ = Math.random() * 0.5 - 0.25
+    
+        const originVX = Math.random() * (1/100) - (1/200)
+        const originVY = (2 + Math.random()) * (1/90)
+        const originVZ = Math.random() * (1/100) - (1/200)
+    
+        const rainDrop = new THREE.Vector3(
+            originX,
+            originY,
+            originZ,
+        );
+    
+        rainDrop.originX = originX
+        rainDrop.originY = originY
+        rainDrop.originZ = originZ
+        rainDrop.originVX = originVX
+        rainDrop.originVY = originVY
+        rainDrop.originVZ = originVZ
+    
+        rainDrop.vx = originVX
+        rainDrop.vy = originVY
+        rainDrop.vz = originVZ
+    
+        rainGeo.vertices.push(rainDrop);
+    }
+    
+    /* Create the particle shared material */
+    const rainMaterial = new THREE.ParticleBasicMaterial({
+        color: 0x0000FF,
+        size: .2,
+        map: THREE.ImageUtils.loadTexture(
+            "assets/textures/particle.png"
+        ),
+        opacity: .8,
+        blending: THREE.AdditiveBlending,
+        transparent: true,
+    });
+    
+    /* Add the particles all together */
+    const rain = new THREE.Points(rainGeo, rainMaterial);
+    sceneGraph.add(rain);
+    rain.position.y = 1;
 }
 
 function createTree(cylinderRadius = 1/6, cylinderHeight = 4/6, baseConeRadius = 2/6, coneHeight = 1) {
@@ -410,13 +465,13 @@ function createForest(sceneGraph){
     tree4.castShadow = true;
     tree4.receiveShadow = true;
 
-    const tree5 = createTree(1/8, 4/8, 2/8, 6/8);
-    sceneGraph.add(tree5);
-    tree5.translateZ(1)
-    tree5.translateX(1)
-    // Set shadow property
-    tree5.castShadow = true;
-    tree5.receiveShadow = true;
+    // const tree5 = createTree(1/8, 4/8, 2/8, 6/8);
+    // sceneGraph.add(tree5);
+    // tree5.translateZ(1)
+    // tree5.translateX(1)
+    // // Set shadow property
+    // tree5.castShadow = true;
+    // tree5.receiveShadow = true;
 
     const tree6 = createTree(1/9, 4/9, 2/9, 6/9);
     sceneGraph.add(tree6);
@@ -427,169 +482,235 @@ function createForest(sceneGraph){
     tree6.receiveShadow = true;
 }
 
+function createMesh(geom, imageFile) {
+    var texture = new THREE.ImageUtils.loadTexture("assets/textures/" + imageFile);
+    var mat = new THREE.MeshPhongMaterial({side: THREE.DoubleSide});
+    mat.map = texture;
+
+    var mesh = new THREE.Mesh(geom, mat);
+    return mesh;
+}
+
 
 // Create and insert in the scene graph the models of the 3D scene
 function load3DObjects(sceneGraph) {
+  // ************************** //
+  // Create a ground plane
+  // ************************** //
+  const planeGeometry = new THREE.PlaneGeometry(15, 10);
+  const planeObject = createMesh(planeGeometry, "grass.jpg");
+  sceneGraph.add(planeObject);
+  planeObject.translateY(-0.0001);
+  // Change orientation of the plane using rotation
+  planeObject.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+  // Set shadow property
+  planeObject.receiveShadow = true;
 
-    // ************************** //
-    // Create a ground plane
-    // ************************** //
-    const planeGeometry = new THREE.PlaneGeometry(15, 6);
-    //const planeGeometry = new THREE.PlaneGeometry(15, 15);
-    const planeMaterial = new THREE.MeshPhongMaterial({ color: 'rgb(154,205,50)', side: THREE.DoubleSide });
-    const planeObject = new THREE.Mesh(planeGeometry, planeMaterial);
-    sceneGraph.add(planeObject);
-    planeObject.translateY(-0.0001);
-    // Change orientation of the plane using rotation
-    planeObject.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
-    // Set shadow property
-    planeObject.receiveShadow = true;
+  //A contruir outra estrada....
+  const roadGeometry = new THREE.PlaneGeometry(10.2, 1);
+  const roadMaterial = new THREE.MeshPhongMaterial({
+    color: "red",
+    side: THREE.DoubleSide,
+  });
+  const roadObject = new THREE.Mesh(roadGeometry, roadMaterial);
+  sceneGraph.add(roadObject);
+  roadObject.translateZ(4);
+  // Change orientation of the plane using rotation
+  roadObject.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+  // Set shadow property
+  roadObject.receiveShadow = true;
 
-    const circleGeometry1 = new THREE.CircleGeometry(3, 100);
-    const circleMaterial1 = new THREE.MeshPhongMaterial({ color: 'rgb(200, 200, 200)', side: THREE.DoubleSide });
-    const circle1 = new THREE.Mesh(circleGeometry1, circleMaterial1);
-    sceneGraph.add(circle1);
-    // Change orientation of the plane using rotation
-    circle1.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
-    // Set shadow property
-    circle1.receiveShadow = true;
+  const roadGeometry1 = new THREE.PlaneGeometry(3, 1);
+  const roadMaterial1 = new THREE.MeshPhongMaterial({
+    color: "red",
+    side: THREE.DoubleSide,
+  });
+  const roadObject1 = new THREE.Mesh(roadGeometry1, roadMaterial1);
+  sceneGraph.add(roadObject1);
+  roadObject1.translateZ(3.05);
+  roadObject1.translateX(-5.8);
+  // Change orientation of the plane using rotation
+  roadObject1.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+  roadObject1.rotation.z = 0.8;
+  // Set shadow property
+  roadObject1.receiveShadow = true;
+  //continuar...
 
-    const circleGeometry2 = new THREE.CircleGeometry(2, 100);
-    const circleMaterial2 = new THREE.MeshPhongMaterial({ color: 'rgb(154,205,50)', side: THREE.DoubleSide });
-    const circle2 = new THREE.Mesh(circleGeometry2, circleMaterial2);
-    sceneGraph.add(circle2);
-    circle2.translateY(0.0001);
-    // Change orientation of the plane using rotation
-    circle2.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
-    // Set shadow property
-    circle2.receiveShadow = true;
+  const circleGeometry1 = new THREE.CircleGeometry(3, 100);
+  const circle1 = createMesh(circleGeometry1, "metal-rust.jpg");
+  sceneGraph.add(circle1);
+  // Change orientation of the plane using rotation
+  circle1.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+  // Set shadow property
+  circle1.receiveShadow = true;
 
-    const roadLineGeometry = new THREE.CircleGeometry(2.5, 100);
-    roadLineGeometry.vertices.splice(0, 1); 
-    const roadLine =  new THREE.LineLoop(roadLineGeometry, new THREE.LineBasicMaterial({ color: 'yellow'}));
-    sceneGraph.add( roadLine );
-    // Change orientation
-    roadLine.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
-    // Set shadow property
-    roadLine.receiveShadow = true;
+  const circleGeometry2 = new THREE.CircleGeometry(2, 100);
+  const circle2 = createMesh(circleGeometry2, "grass.jpg");
+  sceneGraph.add(circle2);
+  circle2.translateY(0.0001);
+  // Change orientation of the plane using rotation
+  circle2.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+  // Set shadow property
+  circle2.receiveShadow = true;
 
-    // ************************** //
-    // Create a text box
-    // ************************** //
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    var text = document.createElement('div');
-    text.setAttribute('id', 'text');
-    text.style.fontFamily = 'verdana';
-    text.style.fontSize = ((width*height) * 20) / (1811040) + 'px';
-    text.style.position = 'absolute';
-    text.style.width = ((width*height) * 100) / (1811040);
-    text.style.height = ((width*height) * 100) / (1811040);
-    text.style.padding = ((width*height) * 10) / (1811040) + 'px';
-    text.style.border = ((width*height) * 5) / (1811040) + 'px solid gray';
-    text.style.backgroundColor = "white";
-    text.style.top = 0 + 'px';
-    text.style.left = 0 + 'px';
-    text.innerHTML = "To control the left traffic light: <ul> <li>Press 'W' KEY to change to green;</li> <li>Press 'S' KEY to change to red.</li> </ul> <br/> To control the right traffic light: <ul> <li>Press 'A' KEY to change to green;</li> <li>Press 'D' KEY to change to red.</li>";
-    document.body.appendChild(text);
+  const roadLineGeometry = new THREE.CircleGeometry(2.5, 100);
+  roadLineGeometry.vertices.splice(0, 1);
+  const roadLine = new THREE.LineLoop(
+    roadLineGeometry,
+    new THREE.LineBasicMaterial({ color: "yellow" })
+  );
+  // var texture = new THREE.ImageUtils.loadTexture("assets/textures/road-line.jpg");
+  // var mat = new THREE.MeshPhongMaterial();
+  // mat.map = texture;
+  // const roadLine  = new THREE.LineLoop(roadLineGeometry, mat);
+  sceneGraph.add(roadLine);
+  // Change orientation
+  roadLine.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+  // Set shadow property
+  roadLine.receiveShadow = true;
 
-    // ************************** //
-    // Create a Car
-    // ************************** //
-    const car = Car("rgb(255,140,0)");
-    sceneGraph.add(car);
-    car.translateZ(2.75)
-    // Set shadow property
-    car.castShadow = true;
-    car.receiveShadow = true;
+  // ************************** //
+  // Create a text box
+  // ************************** //
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  var text = document.createElement("div");
+  text.setAttribute("id", "text");
+  text.style.fontFamily = "verdana";
+  text.style.fontSize = (width * height * 20) / 1811040 + "px";
+  text.style.position = "absolute";
+  text.style.width = (width * height * 100) / 1811040;
+  text.style.height = (width * height * 100) / 1811040;
+  text.style.padding = (width * height * 10) / 1811040 + "px";
+  text.style.border = (width * height * 5) / 1811040 + "px solid gray";
+  text.style.backgroundColor = "white";
+  text.style.top = 0 + "px";
+  text.style.left = 0 + "px";
+  text.innerHTML =
+    "To control the left traffic light: <ul> <li>Press 'W' KEY to change to green;</li> <li>Press 'S' KEY to change to red.</li> </ul> <br/> To control the right traffic light: <ul> <li>Press 'A' KEY to change to green;</li> <li>Press 'D' KEY to change to red.</li>";
+  document.body.appendChild(text);
 
-    // ************************** //
-    // Create car1
-    // ************************** //
-    const car1 = Car("rgb(75,0,130)");
-    sceneGraph.add(car1);
-    car1.translateZ(2)
-    car1.translateX(1)
-    car1.rotation.y = 3.6
-    // Set shadow property
-    car1.castShadow = true;
-    car1.receiveShadow = true;
+  // ************************** //
+  // Create a Car
+  // ************************** //
+  const car = Car("rgb(255,140,0)");
+  sceneGraph.add(car);
+  car.translateZ(2.75);
+  // Set shadow property
+  car.castShadow = true;
+  car.receiveShadow = true;
 
-    // ************************** //
-    // Create car2
-    // ************************** //
-    const car2 = Car('#000000', 0.2, 0.75, 0.5);
-    sceneGraph.add(car2);
-    car2.translateZ(2.55)
-    car2.translateX(-1)
-    car2.rotation.y = -0.48
-    // Set shadow property
-    car2.castShadow = true;
-    car2.receiveShadow = true;
+  // ************************** //
+  // Create car1
+  // ************************** //
+  const car1 = Car("rgb(75,0,130)");
+  sceneGraph.add(car1);
+  car1.translateZ(2);
+  car1.translateX(1);
+  car1.rotation.y = 3.6;
+  // Set shadow property
+  car1.castShadow = true;
+  car1.receiveShadow = true;
 
-    // ************************** //
-    // Create a Truck
-    // ************************** //
-    const truck = Truck();
-    sceneGraph.add(truck);
-    truck.translateZ(2.25)
-    truck.rotation.y = 3.1
-    // Set shadow property
-    truck.castShadow = true;
-    truck.receiveShadow = true;
+  // ************************** //
+  // Create car2
+  // ************************** //
+  const car2 = Car("#000000", 0.2, 0.75, 0.5);
+  sceneGraph.add(car2);
+  car2.translateZ(2.55);
+  car2.translateX(-1);
+  car2.rotation.y = -0.48;
+  // Set shadow property
+  car2.castShadow = true;
+  car2.receiveShadow = true;
 
-    // ************************** //
-    // Create a Mirror
-    // ************************** //
-    const mirror = createMirror();
-    sceneGraph.add(mirror);
-    mirror.translateZ(1);
-    mirror.translateX(-1.50);
-    // Set shadow property
-    mirror.castShadow = true;
-    mirror.receiveShadow = true;
+  // ************************** //
+  // Create a Truck
+  // ************************** //
+  const truck = Truck();
+  sceneGraph.add(truck);
+  truck.translateZ(2.25);
+  truck.rotation.y = 3.1;
+  // Set shadow property
+  truck.castShadow = true;
+  truck.receiveShadow = true;
 
-    // ************************** //
-    // Create a trafficLight
-    // ************************** //
-    const trafficLight0 = TrafficLight("trafficLight0");
-    sceneGraph.add(trafficLight0);
-    trafficLight0.translateZ(-0.5);
-    // Set shadow property
-    trafficLight0.castShadow = true;
-    trafficLight0.receiveShadow = true;
+  // ************************** //
+  // Create a Mirror
+  // ************************** //
+  const mirror = createMirror();
+  sceneGraph.add(mirror);
+  mirror.translateZ(1);
+  mirror.translateX(-1.5);
+  // Set shadow property
+  mirror.castShadow = true;
+  mirror.receiveShadow = true;
 
-    // ************************** //
-    // Create a trafficLight
-    // ************************** //
-    const trafficLight1 = TrafficLight("trafficLight1");
-    sceneGraph.add(trafficLight1);
-    trafficLight1.translateZ(-0.5);
-    trafficLight1.translateX(4.8);
-    // Set shadow property
-    trafficLight1.castShadow = true;
-    trafficLight1.receiveShadow = true;
+  // ************************** //
+  // Create a trafficLight
+  // ************************** //
+  const trafficLight0 = TrafficLight("trafficLight0");
+  sceneGraph.add(trafficLight0);
+  trafficLight0.translateZ(-0.5);
+  // Set shadow property
+  trafficLight0.castShadow = true;
+  trafficLight0.receiveShadow = true;
 
-    // ************************** //
-    // Create Forest
-    // ************************** //
-    createForest(sceneGraph);
+  // ************************** //
+  // Create a trafficLight
+  // ************************** //
+  const trafficLight1 = TrafficLight("trafficLight1");
+  sceneGraph.add(trafficLight1);
+  trafficLight1.translateZ(-0.5);
+  trafficLight1.translateX(4.8);
+  // Set shadow property
+  trafficLight1.castShadow = true;
+  trafficLight1.receiveShadow = true;
 
-    // ************************** //
-    // Create a pivots
-    // ************************** //
-	const pivot = new THREE.Object3D();
-    pivot.add(car);
-    pivot.add(car2);
-    sceneGraph.add(pivot)
-    pivot.name="pivot"
+  // ************************** //
+  // Create Forest
+  // ************************** //
+  createForest(sceneGraph);
 
-    const pivot2 = new THREE.Object3D();
-    pivot2.add(truck);
-    pivot2.add(car1);
-    sceneGraph.add(pivot2)
-    pivot2.name="pivot2"
+  // ************************** //
+  // Create a pivots
+  // ************************** //
+  const pivot = new THREE.Object3D();
+  pivot.add(car);
+  pivot.add(car2);
+  sceneGraph.add(pivot);
+  pivot.name = "pivot";
 
+  const pivot2 = new THREE.Object3D();
+  pivot2.add(truck);
+  pivot2.add(car1);
+  sceneGraph.add(pivot2);
+  pivot2.name = "pivot2";
+
+  // ************************** //
+  // Create a fountain
+  // ************************** //
+  let fountain;
+
+  /* Create a material */
+  const mtlLoader = new THREE.MTLLoader();
+  mtlLoader.load("./models/Fountain.mtl", function (materials) {
+    materials.preload();
+
+    /* Load the object */
+    const objLoader = new THREE.OBJLoader();
+    objLoader.setMaterials(materials);
+    objLoader.load("./models/Fountain.obj", function (object) {
+      sceneGraph.add(object);
+      fountain = object;
+      fountain.position.y = 0.09;
+    });
+  });
+  
+  // ************************** //
+  // Create a fountain spout
+  // ************************** //
+  createFountainSpout(sceneGraph);
 }
 
 // Displacement value
@@ -685,6 +806,43 @@ function computeFrame(time) {
         yellowLit1 = true;
         redTimetoCall1 = (new Date().getTime() / 1000) + 0.8; 
     }
+
+    //Animate the fountain spout
+    rainGeo.vertices.forEach(p => {
+        /* Gravity acceleration */
+        p.vy -= Math.random() / 1000;
+
+        /* Move the particle in the direction of the velocity */
+        p.x += p.vx;
+        p.y += p.vy - (Math.abs(p.x) + Math.abs(p.z)) / 50; // So that the particles further away from the fountain get less acceleration towards the sky. This simulates the pipes of water pushing water away from them
+        p.z += p.vz;
+
+        /* Once the drop reaches the top or bottom "floors", reload it to the initial position and velocities */
+        const inTopSection = p.x < .35 && p.z < .35 && p.x > -.35 && p.z > -.35
+        if (p.y < -.20 && inTopSection || (p.y < -1 && !inTopSection)) {
+            p.x = p.originX
+            p.y = p.originY
+            p.z = p.originZ
+
+            p.vx = p.originVX
+            p.vy = p.originVY
+            p.vz = p.originVZ
+        }
+
+        /* Decrease X and Z velocities as they go further away from the center */
+        if (p.vy < 0 && p.vx > 0) {
+            p.vx -= Math.random() / 20000;
+        } else if (p.vy < 0 && p.vx < 0) {
+            p.vx += Math.random() / 20000;
+        }
+        if (p.vy < 0 && p.vz > 0) {
+            p.vz -= Math.random() / 20000;
+        } else if (p.vy < 0 && p.vz < 0) {
+            p.vz += Math.random() / 20000;
+        }
+    });
+    rainGeo.verticesNeedUpdate = true;
+    rain && (rain.rotation.y += 0.003); // A little rotation so that it seems more natural
 
     // Rendering
     helper.render(sceneElements);
