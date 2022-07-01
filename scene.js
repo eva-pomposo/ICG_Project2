@@ -388,7 +388,7 @@ function createFountainSpout(sceneGraph){
         color: 0x0000FF,
         size: .2,
         map: THREE.ImageUtils.loadTexture(
-            "assets/textures/particle.png"
+            "textures/particle.png"
         ),
         opacity: .8,
         blending: THREE.AdditiveBlending,
@@ -399,6 +399,8 @@ function createFountainSpout(sceneGraph){
     const rain = new THREE.Points(rainGeo, rainMaterial);
     sceneGraph.add(rain);
     rain.position.y = 1;
+    rain.castShadow = true;
+    rain.receiveShadow = true;
 }
 
 function createTree(cylinderRadius = 1/6, cylinderHeight = 4/6, baseConeRadius = 2/6, coneHeight = 1) {
@@ -483,7 +485,7 @@ function createForest(sceneGraph){
 }
 
 function createMesh(geom, imageFile) {
-    var texture = new THREE.ImageUtils.loadTexture("assets/textures/" + imageFile);
+    var texture = new THREE.ImageUtils.loadTexture("textures/" + imageFile);
     var mat = new THREE.MeshPhongMaterial({side: THREE.DoubleSide});
     mat.map = texture;
 
@@ -559,7 +561,7 @@ function load3DObjects(sceneGraph) {
     roadLineGeometry,
     new THREE.LineBasicMaterial({ color: "yellow" })
   );
-  // var texture = new THREE.ImageUtils.loadTexture("assets/textures/road-line.jpg");
+  // var texture = new THREE.ImageUtils.loadTexture("textures/road-line.jpg");
   // var mat = new THREE.MeshPhongMaterial();
   // mat.map = texture;
   // const roadLine  = new THREE.LineLoop(roadLineGeometry, mat);
@@ -702,11 +704,30 @@ function load3DObjects(sceneGraph) {
     objLoader.setMaterials(materials);
     objLoader.load("./models/Fountain.obj", function (object) {
       sceneGraph.add(object);
+      object.castShadow = true;
+      object.receiveShadow = true;
       fountain = object;
       fountain.position.y = 0.09;
     });
   });
-  
+
+  // ************************** //
+  // Create water
+  // ************************** //
+  const waterGeometry = new THREE.CircleGeometry(1, 100);
+
+  const water = new THREE.Water(waterGeometry, {
+    color: 0x729fcf,
+    scale: 4,
+    flowDirection: new THREE.Vector2(1, 1),
+    textureWidth: 1024,
+    textureHeight: 1024,
+  });
+
+  water.position.y = 0.1;
+  water.rotation.x = Math.PI * -0.5;
+  sceneGraph.add(water);
+
   // ************************** //
   // Create a fountain spout
   // ************************** //
