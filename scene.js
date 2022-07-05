@@ -16,6 +16,7 @@ const sceneElements = {
 //Font geometry and object
 const rainGeo = new THREE.Geometry();
 let rain;
+let fountain;
 
 // Functions are called
 //  1. Initialize the empty scene
@@ -35,6 +36,9 @@ window.addEventListener('resize', resizeWindow);
 var keyD = false, keyA = false, keyS = false, keyW = false;
 document.addEventListener('keydown', onDocumentKeyDown, false);
 document.addEventListener('keyup', onDocumentKeyUp, false);
+
+//selection
+document.addEventListener('click', onDocumentMouseClick, false);
 
 // Update render image size and camera aspect when the window is resized
 function resizeWindow(eventParam) {
@@ -85,6 +89,27 @@ function onDocumentKeyUp(event) {
         case 87: //w
             keyW = false;
             break;
+    }
+}
+
+function onDocumentMouseClick(event) {
+    console.log('Mouse click');
+    // direction from the camera
+    var vector = new THREE.Vector3((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1, 0.5);
+    vector = vector.unproject(sceneElements.camera);
+
+    // ray casting
+    var raycaster = new THREE.Raycaster(sceneElements.camera.position, vector.sub(sceneElements.camera.position).normalize());
+
+    // intersected objects
+    var intersects = raycaster.intersectObjects([fountain]);
+    console.log(intersects);
+
+    if (intersects.length > 0) {
+        console.log("clik in fountain");
+
+        // the closest (i.e., first) one
+        console.log(intersects[0]);
     }
 }
 
@@ -692,7 +717,6 @@ function load3DObjects(sceneGraph) {
   // ************************** //
   // Create a fountain
   // ************************** //
-  let fountain;
 
   /* Create a material */
   const mtlLoader = new THREE.MTLLoader();
@@ -703,10 +727,10 @@ function load3DObjects(sceneGraph) {
     const objLoader = new THREE.OBJLoader();
     objLoader.setMaterials(materials);
     objLoader.load("./models/Fountain.obj", function (object) {
-      sceneGraph.add(object);
-      object.castShadow = true;
-      object.receiveShadow = true;
       fountain = object;
+      sceneGraph.add(fountain);
+      fountain.castShadow = true;
+      fountain.receiveShadow = true;
       fountain.position.y = 0.09;
     });
   });
