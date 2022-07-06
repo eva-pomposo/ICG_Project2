@@ -1,0 +1,11 @@
+Model Information:
+* title:	Street Wooden Bench
+* source:	https://sketchfab.com/3d-models/street-wooden-bench-f889c3adfc5945dcb10c1a594b35957b
+* author:	Lior Azi (https://sketchfab.com/liorazi)
+
+Model License:
+* license type:	CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)
+* requirements:	Author must be credited. No commercial use.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Street Wooden Bench" (https://sketchfab.com/3d-models/street-wooden-bench-f889c3adfc5945dcb10c1a594b35957b) by Lior Azi (https://sketchfab.com/liorazi) licensed under CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)

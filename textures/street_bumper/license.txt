@@ -1,0 +1,11 @@
+Model Information:
+* title:	Street Bumper
+* source:	https://sketchfab.com/3d-models/street-bumper-ff5ff2a5b6784180a050a3c142ada9d5
+* author:	IkQ (https://sketchfab.com/IkQ)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Street Bumper" (https://sketchfab.com/3d-models/street-bumper-ff5ff2a5b6784180a050a3c142ada9d5) by IkQ (https://sketchfab.com/IkQ) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

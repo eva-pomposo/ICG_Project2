@@ -1,8 +1,5 @@
 "use strict";
 
-//  Adapted from Hunor Márton Borbély tutorial: https://www.freecodecamp.org/news/three-js-tutorial
-//  Adapted from exercise 3, Script ICG 4
-//
 // 		Eva Bartolomeu - Maio 2021
 
 // To store the scene graph, and elements usefull to rendering the scene
@@ -13,9 +10,14 @@ const sceneElements = {
   renderer: null,
 };
 
+const loader = new THREE.GLTFLoader( );
+
 //Font geometry and object
 const rainGeo = new THREE.Geometry();
 let rain;
+
+//PontLight from policeCar
+var policeCarLight;
 
 // Functions are called
 //  1. Initialize the empty scene
@@ -134,7 +136,7 @@ function sideMirror() {
   return new THREE.CanvasTexture(canvas);
 }
 
-function Car(cor, wheelX = 0.15, mainWidth = 0.5, cabinWidth = 0.275) {
+function Car(cor, wheelX = 0.15, mainWidth = 0.5, cabinWidth = 0.275, isPoliceCar = false) {
   const car = new THREE.Group();
 
   const wheel1 = Wheel();
@@ -178,6 +180,20 @@ function Car(cor, wheelX = 0.15, mainWidth = 0.5, cabinWidth = 0.275) {
   cabin.castShadow = true;
   cabin.receiveShadow = true;
   car.add(cabin);
+
+  if (isPoliceCar) {
+    var sphereLight = new THREE.SphereGeometry(0.03);
+    var sphereLightMaterial = new THREE.MeshBasicMaterial({color: 'red'});
+    var sphereLightMesh = new THREE.Mesh(sphereLight, sphereLightMaterial);
+    sphereLightMesh.castShadow = true;
+    car.add(sphereLightMesh);
+    sphereLightMesh.position.y = 0.27;
+
+    policeCarLight = new THREE.PointLight("red");
+    policeCarLight.intensity = 0.3;
+    car.add(policeCarLight);
+    policeCarLight.position.copy(sphereLightMesh.position);
+  }
 
   return car;
 }
@@ -410,96 +426,6 @@ function createFountainSpout(sceneGraph) {
   rain.receiveShadow = true;
 }
 
-function createTree(
-  cylinderRadius = 1 / 6,
-  cylinderHeight = 4 / 6,
-  baseConeRadius = 2 / 6,
-  coneHeight = 1
-) {
-  // Creating a model by grouping basic geometries
-  // Cylinder centered at the origin
-  const cylinderGeometry = new THREE.CylinderGeometry(
-    cylinderRadius,
-    cylinderRadius,
-    cylinderHeight,
-    32
-  );
-  const cylinderMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
-  const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
-  cylinder.castShadow = true;
-  cylinder.receiveShadow = true;
-
-  // Move base of the cylinder to y = 0
-  cylinder.position.y = cylinderHeight / 2.0;
-
-  // Cone
-  const coneGeometry = new THREE.ConeGeometry(baseConeRadius, coneHeight, 32);
-  const greenMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
-  const cone = new THREE.Mesh(coneGeometry, greenMaterial);
-  cone.castShadow = true;
-  cone.receiveShadow = true;
-
-  // Move base of the cone to the top of the cylinder
-  cone.position.y = cylinderHeight + coneHeight / 2.0;
-
-  // Tree
-  var tree = new THREE.Group();
-  tree.add(cylinder);
-  tree.add(cone);
-
-  return tree;
-}
-
-function createForest(sceneGraph) {
-  const tree1 = createTree();
-  sceneGraph.add(tree1);
-  tree1.translateZ(-2.25);
-  tree1.translateX(2.75);
-  // Set shadow property
-  tree1.castShadow = true;
-  tree1.receiveShadow = true;
-
-  const tree2 = createTree();
-  sceneGraph.add(tree2);
-  tree2.translateZ(2.25);
-  tree2.translateX(-2.75);
-  // Set shadow property
-  tree2.castShadow = true;
-  tree2.receiveShadow = true;
-
-  const tree3 = createTree();
-  sceneGraph.add(tree3);
-  tree3.translateZ(-2.5);
-  tree3.translateX(-2.4);
-  // Set shadow property
-  tree3.castShadow = true;
-  tree3.receiveShadow = true;
-
-  const tree4 = createTree(1 / 8, 4 / 8, 2 / 8, 6 / 8);
-  sceneGraph.add(tree4);
-  tree4.translateZ(-1);
-  tree4.translateX(-3.25);
-  // Set shadow property
-  tree4.castShadow = true;
-  tree4.receiveShadow = true;
-
-  // const tree5 = createTree(1/8, 4/8, 2/8, 6/8);
-  // sceneGraph.add(tree5);
-  // tree5.translateZ(1)
-  // tree5.translateX(1)
-  // // Set shadow property
-  // tree5.castShadow = true;
-  // tree5.receiveShadow = true;
-
-  const tree6 = createTree(1 / 9, 4 / 9, 2 / 9, 6 / 9);
-  sceneGraph.add(tree6);
-  tree6.translateZ(1.5);
-  tree6.translateX(3.7);
-  // Set shadow property
-  tree6.castShadow = true;
-  tree6.receiveShadow = true;
-}
-
 function createMesh(geom, imageFile) {
   var texture = new THREE.ImageUtils.loadTexture("textures/" + imageFile);
   var mat = new THREE.MeshPhongMaterial({ side: THREE.DoubleSide });
@@ -509,35 +435,39 @@ function createMesh(geom, imageFile) {
   return mesh;
 }
 
-// Create and insert in the scene graph the models of the 3D scene
-function load3DObjects(sceneGraph) {
+function createMesh(geom, imageFile, bump) {
+  var texture = new THREE.ImageUtils.loadTexture("textures/" + imageFile);
+  geom.computeVertexNormals();
+  var mat = new THREE.MeshPhongMaterial({ side: THREE.DoubleSide });
+  mat.map = texture;
+
+  if (bump) {
+    var bump = THREE.ImageUtils.loadTexture("textures/" + bump);
+    mat.bumpMap = bump;
+    mat.bumpScale = 0.2;
+  }
+
+  var mesh = new THREE.Mesh(geom, mat);
+  return mesh;
+}
+
+  //Text Box with controls
   // setup the control gui
   var controls = new (function () {
-    this.normalScale = 1;
-
-    this.changeCamera = function (e) {
-      var texture = THREE.ImageUtils.loadTexture(
-        "../assets/textures/general/" + e + ".jpg"
-      );
-      sphere2.material.map = texture;
-      sphere1.material.map = texture;
-
-      var bump = THREE.ImageUtils.loadTexture(
-        "../assets/textures/general/" + e + "-normal.jpg"
-      );
-      sphere2.material.normalMap = bump;
-    };
+    this.turnOnfountain = true;
   })();
 
   var gui = new dat.GUI();
   gui
-    .add(controls, "changeCamera", ["OrbitControls", "FirstPersonControls"])
+    .add(controls, "turnOnfountain")
     .onChange(controls.changeCamera);
 
+// Create and insert in the scene graph the models of the 3D scene
+function load3DObjects(sceneGraph) {
   // ************************** //
   // Create a ground plane
   // ************************** //
-  const planeGeometry = new THREE.PlaneGeometry(15, 10);
+  const planeGeometry = new THREE.PlaneGeometry(15, 11);
   const planeObject = createMesh(planeGeometry, "grass.jpg");
   sceneGraph.add(planeObject);
   planeObject.translateY(-0.0001);
@@ -546,15 +476,14 @@ function load3DObjects(sceneGraph) {
   // Set shadow property
   planeObject.receiveShadow = true;
 
-  //A contruir outra estrada....
   const roadGeometry = new THREE.PlaneGeometry(10.2, 1);
   const roadMaterial = new THREE.MeshPhongMaterial({
     color: "red",
     side: THREE.DoubleSide,
   });
-  const roadObject = new THREE.Mesh(roadGeometry, roadMaterial);
+  const roadObject = createMesh(roadGeometry, "metal-rust.jpg");
   sceneGraph.add(roadObject);
-  roadObject.translateZ(4);
+  roadObject.translateZ(4.7);
   // Change orientation of the plane using rotation
   roadObject.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
   // Set shadow property
@@ -565,16 +494,118 @@ function load3DObjects(sceneGraph) {
     color: "red",
     side: THREE.DoubleSide,
   });
-  const roadObject1 = new THREE.Mesh(roadGeometry1, roadMaterial1);
+  const roadObject1 = createMesh(roadGeometry1, "metal-rust.jpg");
   sceneGraph.add(roadObject1);
-  roadObject1.translateZ(3.05);
+  roadObject1.translateZ(3.75);
   roadObject1.translateX(-5.8);
   // Change orientation of the plane using rotation
   roadObject1.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
   roadObject1.rotation.z = 0.8;
   // Set shadow property
   roadObject1.receiveShadow = true;
-  //continuar...
+
+  const roadGeometry2 = new THREE.PlaneGeometry(1, 2);
+  const roadMaterial2 = new THREE.MeshPhongMaterial({
+    color: "red",
+    side: THREE.DoubleSide,
+  });
+  const roroadObject2 = createMesh(roadGeometry2, "metal-rust.jpg");
+  sceneGraph.add(roroadObject2);
+  roroadObject2.translateZ(2.05);
+  roroadObject2.translateX(-6.68);
+  // Change orientation of the plane using rotation
+  roroadObject2.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+  //roroadObject2.rotation.z = 0.8;
+  // Set shadow property
+  roroadObject2.receiveShadow = true;
+
+  const roadGeometry3 = new THREE.PlaneGeometry(2.9, 1);
+  const roadMaterial3 = new THREE.MeshPhongMaterial({
+    color: "red",
+    side: THREE.DoubleSide,
+  });
+  const roadObject3 = createMesh(roadGeometry3, "metal-rust.jpg");
+  sceneGraph.add(roadObject3);
+  roadObject3.translateZ(0.37);
+  roadObject3.translateX(-5.8);
+  // Change orientation of the plane using rotation
+  roadObject3.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+  roadObject3.rotation.z = -0.8;
+  // Set shadow property
+  roadObject3.receiveShadow = true;
+
+  const roadGeometry4 = new THREE.PlaneGeometry(2.4, 1);
+  const roadMaterial4 = new THREE.MeshPhongMaterial({
+    color: "red",
+    side: THREE.DoubleSide,
+  });
+  const roadObject4 = createMesh(roadGeometry4, "metal-rust.jpg");
+  sceneGraph.add(roadObject4);
+  roadObject4.translateX(-4);
+  roadObject4.translateZ(-0.49);
+  // Change orientation of the plane using rotation
+  roadObject4.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+  // Set shadow property
+  roadObject4.receiveShadow = true;
+
+  const roadGeometry5 = new THREE.PlaneGeometry(3, 1);
+  const roadMaterial5 = new THREE.MeshPhongMaterial({
+    color: "red",
+    side: THREE.DoubleSide,
+  });
+  const roadObject5 = createMesh(roadGeometry5, "metal-rust.jpg");
+  sceneGraph.add(roadObject5);
+  roadObject5.translateZ(3.75);
+  roadObject5.translateX(5.8);
+  // Change orientation of the plane using rotation
+  roadObject5.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+  roadObject5.rotation.z = -0.8;
+  // Set shadow property
+  roadObject5.receiveShadow = true;
+
+  const roadGeometry6 = new THREE.PlaneGeometry(1, 2);
+  const roadMaterial6 = new THREE.MeshPhongMaterial({
+    color: "red",
+    side: THREE.DoubleSide,
+  });
+  const roroadObject6 = createMesh(roadGeometry6, "metal-rust.jpg");
+  sceneGraph.add(roroadObject6);
+  roroadObject6.translateZ(2.05);
+  roroadObject6.translateX(6.68);
+  // Change orientation of the plane using rotation
+  roroadObject6.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+  //roroadObject2.rotation.z = 0.8;
+  // Set shadow property
+  roroadObject6.receiveShadow = true;
+
+  const roadGeometry7 = new THREE.PlaneGeometry(2.4, 1);
+  const roadMaterial7 = new THREE.MeshPhongMaterial({
+    color: "red",
+    side: THREE.DoubleSide,
+  });
+  const roadObject7 = createMesh(roadGeometry7, "metal-rust.jpg");
+  sceneGraph.add(roadObject7);
+  roadObject7.translateZ(0.8);
+  roadObject7.translateX(5.8);
+  // Change orientation of the plane using rotation
+  roadObject7.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+  roadObject7.rotation.z = 0.65;
+  // Set shadow property
+  roadObject7.receiveShadow = true;
+
+  const roadGeometry8 = new THREE.PlaneGeometry(2.4, 1);
+  const roadMaterial8 = new THREE.MeshPhongMaterial({
+    color: "red",
+    side: THREE.DoubleSide,
+  });
+  const roadObject8 = createMesh(roadGeometry8, "metal-rust.jpg");
+  sceneGraph.add(roadObject8);
+  roadObject8.translateX(4);
+  roadObject8.translateZ(0.2);
+  // Change orientation of the plane using rotation
+  roadObject8.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+  // Set shadow property
+  roadObject8.receiveShadow = true;
 
   const circleGeometry1 = new THREE.CircleGeometry(3, 100);
   const circle1 = createMesh(circleGeometry1, "metal-rust.jpg");
@@ -610,6 +641,20 @@ function load3DObjects(sceneGraph) {
   roadLine.receiveShadow = true;
 
   // ************************** //
+  // Create a wall
+  // ************************** //
+  for (let i = 0; i < 13; i++) {
+    var wall = createMesh(new THREE.BoxGeometry(3, 3, 2/5), "stone.jpg", "stone-bump.jpg");
+    wall.position.z = -3.30;
+    //wall.position.z = -5;
+    wall.position.x = -6+i;
+    sceneGraph.add(wall);
+    // Set shadow property
+    wall.castShadow = true;
+    wall.receiveShadow = true;
+  }
+
+  // ************************** //
   // Create a text box
   // ************************** //
   const width = window.innerWidth;
@@ -631,14 +676,14 @@ function load3DObjects(sceneGraph) {
   document.body.appendChild(text);
 
   // ************************** //
-  // Create a Car
+  // Create a policeCar
   // ************************** //
-  const car = Car("rgb(255,140,0)");
-  sceneGraph.add(car);
-  car.translateZ(2.75);
+  const policeCar = Car("blue", 0.15, 0.5, 0.275, true);
+  sceneGraph.add(policeCar);
+  policeCar.translateZ(2.75);
   // Set shadow property
-  car.castShadow = true;
-  car.receiveShadow = true;
+  policeCar.castShadow = true;
+  policeCar.receiveShadow = true;
 
   // ************************** //
   // Create car1
@@ -655,7 +700,7 @@ function load3DObjects(sceneGraph) {
   // ************************** //
   // Create car2
   // ************************** //
-  const car2 = Car("#000000", 0.2, 0.75, 0.5);
+  const car2 = Car("#000000", 0.2, 0.75, 0.5, false);
   sceneGraph.add(car2);
   car2.translateZ(2.55);
   car2.translateX(-1);
@@ -708,16 +753,11 @@ function load3DObjects(sceneGraph) {
   trafficLight1.receiveShadow = true;
 
   // ************************** //
-  // Create Forest
-  // ************************** //
-  createForest(sceneGraph);
-
-  // ************************** //
   // Create a pivots
   // ************************** //
   const pivot = new THREE.Object3D();
-  pivot.add(car);
   pivot.add(car2);
+  pivot.add(policeCar);
   sceneGraph.add(pivot);
   pivot.name = "pivot";
 
@@ -742,8 +782,12 @@ function load3DObjects(sceneGraph) {
     objLoader.setMaterials(materials);
     objLoader.load("./models/Fountain.obj", function (object) {
       sceneGraph.add(object);
-      object.castShadow = true;
-      object.receiveShadow = true;
+      object.traverse(function(child) {
+        if (child instanceof THREE.Mesh) {
+          child.receiveShadow = true;
+          child.castShadow = true;
+        }
+      });
       fountain = object;
       fountain.position.y = 0.09;
     });
@@ -770,6 +814,177 @@ function load3DObjects(sceneGraph) {
   // Create a fountain spout
   // ************************** //
   createFountainSpout(sceneGraph);
+
+  // ************************** //
+  // Create Forest
+  // ************************** //
+  loader.load( 'textures/trees_and_foliage/scene.gltf', function( gltf ) {
+    gltf.scene.scale.set(0.002, 0.002, 0.002);
+    sceneGraph.add(gltf.scene);
+    gltf.scene.position.x = 6;
+    gltf.scene.position.z = -2;
+    gltf.scene.position.y = -0.001;
+
+    const mesh = gltf.scene;
+    mesh.traverse(function(child) {
+      if (child instanceof THREE.Mesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+    sceneGraph.add(mesh);
+  } );
+
+  loader.load( 'textures/stylized_tree/scene.gltf', function( gltf ) {
+    gltf.scene.scale.set(2, 2, 2);
+    gltf.scene.position.x = -4;
+    gltf.scene.position.z = 2;
+    // gltf.scene.castShadow = true;
+    // gltf.scene.receiveShadow = true;
+
+    const mesh = gltf.scene;
+    mesh.traverse(function(child) {
+      if (child instanceof THREE.Mesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+    sceneGraph.add(mesh);
+
+  } );
+
+  loader.load( 'textures/stylized_tree/scene.gltf', function( gltf ) {
+    gltf.scene.scale.set(3, 3, 3);
+    gltf.scene.position.x = 4;
+    gltf.scene.position.z = 2;
+    // gltf.scene.castShadow = true;
+    // gltf.scene.receiveShadow = true;
+
+    const mesh = gltf.scene;
+    mesh.traverse(function(child) {
+      if (child instanceof THREE.Mesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+    sceneGraph.add(mesh);
+
+  } );
+
+  loader.load( 'textures/stylized_tree/scene.gltf', function( gltf ) {
+    gltf.scene.scale.set(4, 4, 4);
+    gltf.scene.position.x = -6;
+    gltf.scene.position.z = -2;
+    gltf.scene.castShadow = true;
+    gltf.scene.receiveShadow = true;
+
+    const mesh = gltf.scene;
+    mesh.traverse(function(child) {
+      if (child instanceof THREE.Mesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+    sceneGraph.add(mesh);
+
+  } );
+
+  for (let i = 0; i < 3; i++) {
+    loader.load( 'textures/street_cone/scene.gltf', function( gltf ) {
+      gltf.scene.scale.set(0.1, 0.1, 0.1);
+      gltf.scene.position.x = -3.5;
+      gltf.scene.position.z = -0.15 - (i/3);
+      gltf.scene.castShadow = true;
+      gltf.scene.receiveShadow = true;
+  
+      const mesh = gltf.scene;
+      mesh.traverse(function(child) {
+        if (child instanceof THREE.Mesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+      sceneGraph.add(mesh);
+  
+    } ); 
+  }
+
+  loader.load( 'textures/barrier13_-_street_kitbash_collection/scene.gltf', function( gltf ) {
+    gltf.scene.scale.set(0.4, 0.4, 0.4);
+    gltf.scene.position.x = 3.5;
+    gltf.scene.position.z = 0.25;
+    gltf.scene.castShadow = true;
+    gltf.scene.receiveShadow = true;
+
+    const mesh = gltf.scene;
+    mesh.traverse(function(child) {
+      if (child instanceof THREE.Mesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+    sceneGraph.add(mesh);
+
+  } );
+
+  loader.load( 'textures/street_wooden_bench/scene.gltf', function( gltf ) {
+    gltf.scene.scale.set(0.5, 0.5, 0.5);
+    // gltf.scene.position.x = 3.5;
+    // gltf.scene.position.z = 0.25;
+    gltf.scene.castShadow = true;
+    gltf.scene.receiveShadow = true;
+    gltf.scene.rotation.y = 1.5;
+    gltf.scene.position.x = 2;
+    gltf.scene.position.y = 0.3;
+    gltf.scene.position.z = -4;
+
+    const mesh = gltf.scene;
+    mesh.traverse(function(child) {
+      if (child instanceof THREE.Mesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+    sceneGraph.add(mesh);
+
+  } );
+
+  loader.load( 'textures/sidewalk/scene.gltf', function( gltf ) {
+    gltf.scene.scale.set(1.7, 1.7, 1.7);
+    gltf.scene.receiveShadow = true;
+    gltf.scene.rotation.y = 3.15;
+    gltf.scene.position.x = 0.75;
+    gltf.scene.position.y = -0.15;
+    gltf.scene.position.z = -4.5;
+
+    const mesh = gltf.scene;
+    mesh.traverse(function(child) {
+      if (child instanceof THREE.Mesh) {
+        child.receiveShadow = true;
+      }
+    });
+    sceneGraph.add(mesh);
+
+  } );
+
+  loader.load( 'textures/street_bumper/scene.gltf', function( gltf ) {
+    gltf.scene.scale.set(0.0013, 0.0013, 0.0013);
+    // gltf.scene.receiveShadow = true;
+    gltf.scene.rotation.y = 1.55;
+    // gltf.scene.position.x = 0.75;
+    // gltf.scene.position.y = -0.15;
+    gltf.scene.position.z = 4.71;
+
+    const mesh = gltf.scene;
+    mesh.traverse(function(child) {
+      if (child instanceof THREE.Mesh) {
+        child.receiveShadow = true;
+      }
+    });
+    sceneGraph.add(mesh);
+
+  } );
+
 }
 
 // Displacement value
@@ -783,6 +998,9 @@ var inCirculation0 = true;
 var yellowLit1 = false;
 var redTimetoCall1 = 0;
 var inCirculation1 = true;
+
+let policeCar_activeRed = true;
+let policeCar_lightDuration = 0;
 
 const pivot2 = sceneElements.sceneGraph.getObjectByName("pivot2");
 const pivot = sceneElements.sceneGraph.getObjectByName("pivot");
@@ -804,6 +1022,17 @@ const redCircle1 =
   sceneElements.sceneGraph.getObjectByName("trafficLight1_red");
 
 function computeFrame(time) {
+  if (policeCar_activeRed && policeCar_lightDuration < new Date().getTime() / 1000) {
+    policeCarLight.color.setHex( 0x0000ff );
+    policeCar_activeRed = false;
+    policeCar_lightDuration = new Date().getTime() / 1000 + 0.15;
+
+  }else if (policeCar_lightDuration < new Date().getTime() / 1000){
+    policeCarLight.color.setHex( 0xff0000 );
+    policeCar_activeRed = true;
+    policeCar_lightDuration = new Date().getTime() / 1000 + 0.15;
+  }
+
   //Stop pivot2 circulation if the traffic light is red
   if (pivot2.rotation.y == -7.799999999999922) {
     pivot2.rotation.y = -1.5000000000000009;
@@ -905,6 +1134,7 @@ function computeFrame(time) {
   }
 
   //Animate the fountain spout
+  if (controls.turnOnfountain) {
   rainGeo.vertices.forEach((p) => {
     /* Gravity acceleration */
     p.vy -= Math.random() / 1000;
@@ -940,6 +1170,7 @@ function computeFrame(time) {
   });
   rainGeo.verticesNeedUpdate = true;
   rain && (rain.rotation.y += 0.003); // A little rotation so that it seems more natural
+}
 
   // Rendering
   helper.render(sceneElements);

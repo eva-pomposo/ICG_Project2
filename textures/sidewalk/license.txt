@@ -1,0 +1,11 @@
+Model Information:
+* title:	Sidewalk
+* source:	https://sketchfab.com/3d-models/sidewalk-efb387300f14448ca449520a6089782b
+* author:	andyxor (https://sketchfab.com/andyxor)
+
+Model License:
+* license type:	CC-BY-NC-SA-4.0 (http://creativecommons.org/licenses/by-nc-sa/4.0/)
+* requirements:	Author must be credited. No commercial use. Modified versions must have the same license.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Sidewalk" (https://sketchfab.com/3d-models/sidewalk-efb387300f14448ca449520a6089782b) by andyxor (https://sketchfab.com/andyxor) licensed under CC-BY-NC-SA-4.0 (http://creativecommons.org/licenses/by-nc-sa/4.0/)
